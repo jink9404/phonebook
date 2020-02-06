@@ -6,12 +6,22 @@ public class Main {
 
     public static void main(String[] args) {
 	// write your code here
-
+        ArrayList<Contact> contactlist = new ArrayList<Contact>();
         Contact contact = new Contact();
-        contact.setName(null);
-        System.out.println("name : " + contact.getName());
-        contact.setNumber("010-92810413","0322888397");
-        System.out.println("전화번호 : " + contact.getArrayListNumber());
+        ContactHandler ch = new ContactHandler();
+        contactlist = ch.readCSV("Contacts.csv");
 
+        contact.setName("기모찌");
+        contact.setNumber("01022222222");
+        ch.contactlistPrint(contactlist);
+        ch.contactAppend(contactlist,contact);
+        System.out.println();
+        ch.contactlistPrint(contactlist);
+
+        //ch.contactDelete(contactlist,ch.contactSelect(contactlist,"기모찌"));
+
+        System.out.println();
+        ch.contactlistPrint(contactlist);
+        ch.writeCSV(contactlist);
     }
 }
