@@ -1,13 +1,13 @@
 package com.company;
 
 
+import java.awt.image.AreaAveragingScaleFilter;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.StringTokenizer;
+import java.util.*;
+import java.util.regex.Pattern;
 
 public class ContactHandler {
     //private static final String fileName = "Contacts.csv";
@@ -19,7 +19,7 @@ public class ContactHandler {
 
     }
 
-    public ArrayList<Contact> readCSV(String path) {
+    public ArrayList<Contact> readCSV(String path) throws FileNotFoundException, NoSuchElementException{
         ArrayList<Contact> contactList = new ArrayList<Contact>();
         ArrayList<String> tmplist = null;
         FileReader reader = null;
@@ -28,7 +28,7 @@ public class ContactHandler {
 
         try
         {
-            reader = new FileReader(file,Charset.forName("UTF8"));
+            reader = new FileReader(file, Charset.forName("UTF8"));
             bufferedReader = new BufferedReader(reader);
             String line = "";
             String tmp = "";
@@ -40,15 +40,15 @@ public class ContactHandler {
                 contact.setName(st.nextToken());
 
                 tmp = st.nextToken();
-                if(tmp.equals("null"))
+                /*if(tmp.equals("null"))
                     contact.setEmail(null);
-                else
+                else*/
                     contact.setEmail(tmp);
 
                 tmp = st.nextToken();
-                if(tmp.equals("null"))
+                /*if(tmp.equals("null"))
                     contact.setAddress(null);
-                else
+                else*/
                     contact.setAddress(tmp);
                 while(st.hasMoreTokens())
                 {
@@ -80,7 +80,7 @@ public class ContactHandler {
         return contactList;
     }
 
-    public int writeCSV(ArrayList<Contact> contactsArrayList)
+    public int writeCSV(ArrayList<Contact> contactsArrayList) throws FileNotFoundException
     {
         File file = new File("Contacts.csv");
         FileWriter writer = null;
@@ -151,12 +151,19 @@ public class ContactHandler {
             if(contact.getName() != null)
                 contactArrayList.add(contact);
             else
-                contact.allclear();
+        contact.allclear();
         this.contactSort(contactArrayList);
     }
     public void contactDelete(ArrayList<Contact> contactArrayList, Contact contact)
     {
-        contactArrayList.remove(contact);
+        try
+        {
+            contactArrayList.remove(contact);
+        }
+        catch (NullPointerException e)
+        {
+            System.out.println("삭제할 연락처가 없습니다.");
+        }
     }
     private void contactSort(ArrayList<Contact> contactArrayList)
     {
@@ -179,7 +186,7 @@ public class ContactHandler {
                 switch (name.charAt(0))
                 {
                     case 'ㄱ': case '가':
-                        if(contactArrayList.get(i).getName().charAt(0)>='\uAC00' && contactArrayList.get(i).getName().charAt(0)<='\uB097') //가~낗
+                        if(contactArrayList.get(i).getName().charAt(0)>='\uABFF' && contactArrayList.get(i).getName().charAt(0)<='\uB097') //가~낗
                         {tmpList.add(contactArrayList.get(i));continue;} break;
                     case 'ㄴ': case '나':
                         if(contactArrayList.get(i).getName().charAt(0)>='\uB098' && contactArrayList.get(i).getName().charAt(0)<='\uB2E3') //나~닣
@@ -226,15 +233,14 @@ public class ContactHandler {
         return tmpList;
     }
 
-    public Contact contactSelect(ArrayList<Contact> contactArrayList, String name)
+    public Contact contactSelect(ArrayList<Contact> contactArrayList, int index)
     {
-        for(int i = 0; i < contactArrayList.size(); i++)
+
+        if (index < contactArrayList.size() && index >= 0)
         {
-            if (name.equals(contactArrayList.get(i).getName()))
-            {
-                return contactArrayList.get(i);
-            }
+            return contactArrayList.get(index);
         }
+
         return null;
     }
     public void contactlistPrint(ArrayList<Contact> contactArrayList)
@@ -242,7 +248,7 @@ public class ContactHandler {
 
         for(int i=0;i<contactArrayList.size();i++)
         {
-            System.out.print("{");
+            System.out.print(i + ". {");
             System.out.print(contactArrayList.get(i).getName());
             System.out.print(", ");
             if(contactArrayList.get(i).getEmail() == null)
@@ -257,6 +263,80 @@ public class ContactHandler {
             System.out.print(", ");
             System.out.print(contactArrayList.get(i).getArrayListNumber());
             System.out.println("}");
+        }
+    }
+
+    public Contact contactCreate()
+    {
+        Contact contact = new Contact();
+        Scanner sc = new Scanner(System.in);
+        System.out.print("이름 : ");
+        contact.setName(sc.nextLine());
+        System.out.print("E-Mail : ");
+        contact.setEmail(sc.nextLine());
+        System.out.print("주소 : ");
+        contact.setAddress(sc.nextLine());
+        System.out.print("전화 번호 : ");
+        String str = sc.nextLine();
+        if(Pattern.matches("^\\d{2,3}\\d{3,4}\\d{4}$",str.trim()) ||
+           Pattern.matches("^01(?:0|1|[6-9])(?:\\d{3}|\\d{4})\\d{4}$",str.trim()))
+            contact.getArrayListNumber().add(str);
+
+        end:
+        while(true)
+        {
+            String str1;
+            String str2;
+            System.out.println("\'a\' 전화번호 추가 , \'q\' : 종료");
+            str1 = sc.nextLine();
+            switch (str1)
+            {
+                case "a": System.out.print("추가 : ");
+                    str2 = sc.nextLine();
+                    if(Pattern.matches("^\\d{2,3}\\d{3,4}\\d{4}$",str2.trim()) || Pattern.matches("^01(?:0|1|[6-9])(?:\\d{3}|\\d{4})\\d{4}$",str2.trim())){
+                        contact.getArrayListNumber().add(str2); }break;
+                case "q": break end;
+            }
+        }
+        return contact;
+    }
+    public void contactModify(Contact contact) throws NullPointerException
+    {
+        Scanner sc = new Scanner(System.in);
+        ArrayList<String> tmp;
+        System.out.print("이름 : " + contact.getName() + " ==> ");
+        contact.setName(sc.nextLine());
+        System.out.print("e-mail : " + contact.getEmail() + " ==> ");
+        contact.setEmail(sc.nextLine());
+        System.out.print("주소 : " + contact.getAddress() + " ==> ");
+        contact.setAddress(sc.nextLine());
+        System.out.print("전화번호 : ");
+        for(int i = contact.getArrayListNumber().size() - 1; i >= 0 ; i--)
+        {
+            String str;
+            System.out.print(contact.getArrayListNumber().get(i) + "==>");
+            str = sc.nextLine();
+            if(Pattern.matches("^\\d{2,3}\\d{3,4}\\d{4}$",str.trim()) ||
+                    Pattern.matches("^01(?:0|1|[6-9])(?:\\d{3}|\\d{4})\\d{4}$",str.trim()))
+                contact.getArrayListNumber().set(i,str);
+            else if(str.trim().equals("null"))
+                contact.getArrayListNumber().remove(i);
+        }
+        end:
+        while(true)
+        {
+            String str1;
+            String str2;
+            System.out.println("\'a\' 전화번호 추가 , \'q\' : 종료");
+            str1 = sc.nextLine();
+            switch (str1)
+            {
+                case "a": System.out.print("추가 : ");
+                    str2 = sc.nextLine();
+                    if(Pattern.matches("^\\d{2,3}\\d{3,4}\\d{4}$",str2.trim()) || Pattern.matches("^01(?:0|1|[6-9])(?:\\d{3}|\\d{4})\\d{4}$",str2.trim())){
+                        contact.getArrayListNumber().add(str2); }break;
+                case "q": break end;
+            }
         }
     }
 }
